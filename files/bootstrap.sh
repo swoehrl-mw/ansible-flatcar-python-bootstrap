@@ -1,37 +1,26 @@
-#/bin/bash
-
+#!/bin/bash
 set -e
 
-cd
+# Move to home directory
+cd ~
 
-if [[ -e $HOME/.bootstrapped ]]; then
-  exit 0
-fi
+# Unpack pypy
+tar -xjf $HOME/pypy.tar.bz2
+rm -rf $HOME/pypy.tar.bz2
+rm -rf $HOME/pypy
+mv -n pypy*-portable pypy
 
-PYPY_VERSION=5.1.0
-
-if [[ -e $HOME/pypy-$PYPY_VERSION-linux64.tar.bz2 ]]; then
-  tar -xjf $HOME/pypy-$PYPY_VERSION-linux64.tar.bz2
-  rm -rf $HOME/pypy-$PYPY_VERSION-linux64.tar.bz2
-else
-  wget -O - https://bitbucket.org/pypy/pypy/downloads/pypy-$PYPY_VERSION-linux64.tar.bz2 |tar -xjf -
-fi
-
-mv -n pypy-$PYPY_VERSION-linux64 pypy
-
-## library fixup
-mkdir -p pypy/lib
-[ -f /lib64/libncurses.so.5.9 ] && ln -snf /lib64/libncurses.so.5.9 $HOME/pypy/lib/libtinfo.so.5
-[ -f /lib64/libncurses.so.6.1 ] && ln -snf /lib64/libncurses.so.6.1 $HOME/pypy/lib/libtinfo.so.5
-
+# Prepare bin directory
 mkdir -p $HOME/bin
-
 cat > $HOME/bin/python <<EOF
 #!/bin/bash
-LD_LIBRARY_PATH=$HOME/pypy/lib:$LD_LIBRARY_PATH exec $HOME/pypy/bin/pypy "\$@"
+exec $HOME/pypy/bin/pypy "\$@"
 EOF
-
 chmod +x $HOME/bin/python
+
+ln -s $HOME/pypy/bin/pip $HOME/bin/pip
+
+# Verify python works
 $HOME/bin/python --version
 
 touch $HOME/.bootstrapped
